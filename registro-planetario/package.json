@@ -1,0 +1,23 @@
+{
+  "name": "registro-planetario",
+  "version": "1.0.0",
+  "description": "Una aplicación para registrar y explorar planetas favoritos",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "explorar": "node index.js",
+    "start": "node index.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Gilean16/Modulo5.git"
+  },
+  "keywords": ["planetas", "espacio", "exploracion", "astronomia"],
+  "author": "Explorador Espacial",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/Gilean16/Modulo5/issues"
+  },
+  "homepage": "https://github.com/Gilean16/Modulo5#readme"
+}
+

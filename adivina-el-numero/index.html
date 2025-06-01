@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Adivina el número</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            margin: 0;
+            padding: 0;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            color: white;
+        }
+
+        .game-container {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            text-align: center;
+            max-width: 400px;
+            width: 90%;
+        }
+
+        h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+        }
+
+        .subtitle {
+            font-size: 1.1em;
+            margin-bottom: 30px;
+            opacity: 0.9;
+        }
+
+        .input-container {
+            margin: 20px 0;
+        }
+
+        #numero {
+            padding: 12px 16px;
+            font-size: 18px;
+            border: none;
+            border-radius: 10px;
+            width: 120px;
+            text-align: center;
+            background: rgba(255, 255, 255, 0.9);
+            margin-right: 10px;
+            box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        #numero:focus {
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.5);
+        }
+
+        button {
+            padding: 12px 24px;
+            font-size: 16px;
+            background: linear-gradient(45deg, #4CAF50, #45a049);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(76, 175, 80, 0.3);
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(76, 175, 80, 0.4);
+        }
+
+        button:active {
+            transform: translateY(0);
+        }
+
+        #mensaje {
+            margin-top: 20px;
+            font-weight: bold;
+            font-size: 1.2em;
+            min-height: 30px;
+            padding: 15px;
+            border-radius: 10px;
+            background: rgba(255, 255, 255, 0.1);
+            transition: all 0.3s ease;
+        }
+
+        .success {
+            background: rgba(76, 175, 80, 0.3) !important;
+            border: 2px solid #4CAF50;
+        }
+
+        .hint {
+            background: rgba(255, 193, 7, 0.3) !important;
+            border: 2px solid #FFC107;
+        }
+
+        .error {
+            background: rgba(244, 67, 54, 0.3) !important;
+            border: 2px solid #f44336;
+        }
+
+        .stats {
+            margin-top: 20px;
+            display: flex;
+            justify-content: space-around;
+            background: rgba(255, 255, 255, 0.1);
+            padding: 15px;
+            border-radius: 10px;
+        }
+
+        .stat {
+            text-align: center;
+        }
+
+        .stat-number {
+            font-size: 1.5em;
+            font-weight: bold;
+            display: block;
+        }
+
+        .stat-label {
+            font-size: 0.9em;
+            opacity: 0.8;
+        }
+
+        .restart-btn {
+            background: linear-gradient(45deg, #ff6b6b, #ee5a52);
+            margin-top: 15px;
+            box-shadow: 0 4px 15px rgba(255, 107, 107, 0.3);
+        }
+
+        .restart-btn:hover {
+            box-shadow: 0 6px 20px rgba(255, 107, 107, 0.4);
+        }
+
+        .celebration {
+            animation: celebration 0.6s ease-in-out;
+        }
+
+        @keyframes celebration {
+            0% { transform: scale(1); }
+            25% { transform: scale(1.05); }
+            50% { transform: scale(1.1); }
+            75% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+    </style>
+</head>
+<body>
+    <div class="game-container">
+        <h1>🎯 Adivina el número</h1>
+        <p class="subtitle">La computadora ha generado un número entre 1 y 100. ¡Adivínalo!</p>
+        
+        <div class="input-container">
+            <input type="number" id="numero" min="1" max="100" placeholder="1-100">
+            <button id="adivinar">Adivinar</button>
+        </div>
+        
+        <div id="mensaje"></div>
+        
+        <div class="stats">
+            <div class="stat">
+                <span class="stat-number" id="intentos">0</span>
+                <span class="stat-label">Intentos</span>
+            </div>
+            <div class="stat">
+                <span class="stat-number" id="rango">1-100</span>
+                <span class="stat-label">Rango</span>
+            </div>
+        </div>
+        
+        <button class="restart-btn" id="reiniciar" style="display: none;">🔄 Nuevo Juego</button>
+    </div>
+
+    <script>
+        // Variables del juego
+        let numeroSecreto = Math.floor(Math.random() * 100) + 1;
+        let intentos = 0;
+        let rangoMin = 1;
+        let rangoMax = 100;
+        let juegoTerminado = false;
+
+        // Elementos del DOM
+        const inputNumero = document.getElementById('numero');
+        const botonAdivinar = document.getElementById('adivinar');
+        const mensaje = document.getElementById('mensaje');
+        const intentosDisplay = document.getElementById('intentos');
+        const rangoDisplay = document.getElementById('rango');
+        const botonReiniciar = document.getElementById('reiniciar');
+
+        // Función para actualizar el display de rango
+        function actualizarRango() {
+            rangoDisplay.textContent = `${rangoMin}-${rangoMax}`;
+        }
+
+        // Función para mostrar mensaje con estilo
+        function mostrarMensaje(texto, tipo) {
+            mensaje.textContent = texto;
+            mensaje.className = tipo;
+        }
+
+        // Función para reiniciar el juego
+        function reiniciarJuego() {
+            numeroSecreto = Math.floor(Math.random() * 100) + 1;
+            intentos = 0;
+            rangoMin = 1;
+            rangoMax = 100;
+            juegoTerminado = false;
+            
+            inputNumero.value = '';
+            inputNumero.disabled = false;
+            botonAdivinar.disabled = false;
+            botonReiniciar.style.display = 'none';
+            
+            intentosDisplay.textContent = '0';
+            actualizarRango();
+            mostrarMensaje('¡Nuevo juego iniciado! Ingresa tu primer número.', '');
+            
+            inputNumero.focus();
+        }
+
+        // Función principal del juego
+        function jugar() {
+            if (juegoTerminado) return;
+
+            const numeroJugador = parseInt(inputNumero.value);
+
+            // Validaciones
+            if (isNaN(numeroJugador)) {
+                mostrarMensaje('⚠️ Por favor, ingresa un número válido.', 'error');
+                return;
+            }
+
+            if (numeroJugador < 1 || numeroJugador > 100) {
+                mostrarMensaje('⚠️ El número debe estar entre 1 y 100.', 'error');
+                return;
+            }
+
+            if (numeroJugador < rangoMin || numeroJugador > rangoMax) {
+                mostrarMensaje(`⚠️ El número debe estar entre ${rangoMin} y ${rangoMax}.`, 'error');
+                return;
+            }
+
+            // Incrementar intentos
+            intentos++;
+            intentosDisplay.textContent = intentos;
+
+            // Lógica del juego
+            if (numeroJugador === numeroSecreto) {
+                mostrarMensaje(`🎉 ¡Felicidades! ¡Adivinaste el número en ${intentos} ${intentos === 1 ? 'intento' : 'intentos'}!`, 'success');
+                document.querySelector('.game-container').classList.add('celebration');
+                juegoTerminado = true;
+                inputNumero.disabled = true;
+                botonAdivinar.disabled = true;
+                botonReiniciar.style.display = 'inline-block';
+                
+                setTimeout(() => {
+                    document.querySelector('.game-container').classList.remove('celebration');
+                }, 600);
+            } else if (numeroJugador < numeroSecreto) {
+                rangoMin = Math.max(rangoMin, numeroJugador + 1);
+                mostrarMensaje('📈 El número es más alto. ¡Sigue intentando!', 'hint');
+                actualizarRango();
+            } else {
+                rangoMax = Math.min(rangoMax, numeroJugador - 1);
+                mostrarMensaje('📉 El número es más bajo. ¡Sigue intentando!', 'hint');
+                actualizarRango();
+            }
+
+            // Limpiar input para el siguiente intento
+            inputNumero.value = '';
+            inputNumero.focus();
+        }
+
+        // Event listeners
+        botonAdivinar.addEventListener('click', jugar);
+        botonReiniciar.addEventListener('click', reiniciarJuego);
+
+        // Permitir jugar con Enter
+        inputNumero.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                jugar();
+            }
+        });
+
+        // Enfocar el input al cargar la página
+        window.addEventListener('load', () => {
+            inputNumero.focus();
+        });
+
+        // Mostrar mensaje inicial
+        mostrarMensaje('🎮 ¡Bienvenido! Ingresa un número entre 1 y 100.', '');
+        
+        console.log('🎯 Juego iniciado. Número secreto:', numeroSecreto, '(solo para desarrollo)');
+    </script>
+</body>
+</html>
