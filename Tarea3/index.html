@@ -1,0 +1,459 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fetch vs Axios - API Consumo</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/axios/1.6.0/axios.min.js"></script>
+    <style>
+        :root {
+            --primary: #ff014f;
+            --secondary: #00d2d3;
+            --bg: #f5f7fa;
+            --card-bg: #fff;
+            --shadow: 0 4px 18px rgba(0, 0, 0, 0.05);
+            --radius: 1rem;
+            font-family: system-ui, sans-serif;
+            color-scheme: light dark;
+        }
+
+        *,
+        *::before,
+        *::after {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            background: var(--bg);
+            min-height: 100vh;
+            padding: 2rem;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        h1 {
+            text-align: center;
+            margin-bottom: 2rem;
+            font-weight: 600;
+            font-size: 2.2rem;
+            color: var(--primary);
+        }
+
+        .controls {
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
+            margin-bottom: 2rem;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            padding: 0.8rem 1.5rem;
+            border: none;
+            border-radius: var(--radius);
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 1rem;
+            min-width: 140px;
+        }
+
+        .btn-fetch {
+            background: var(--primary);
+            color: white;
+        }
+
+        .btn-axios {
+            background: var(--secondary);
+            color: white;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
+        }
+
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 2rem;
+            font-size: 1.1rem;
+            color: #666;
+        }
+
+        .loading::after {
+            content: '';
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            margin-left: 10px;
+            border: 2px solid #ddd;
+            border-top: 2px solid var(--primary);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .method-indicator {
+            text-align: center;
+            margin-bottom: 1rem;
+            padding: 0.5rem;
+            border-radius: var(--radius);
+            font-weight: 600;
+            font-size: 1.1rem;
+        }
+
+        .method-fetch {
+            background: linear-gradient(135deg, var(--primary), #ff4757);
+            color: white;
+        }
+
+        .method-axios {
+            background: linear-gradient(135deg, var(--secondary), #0abde3);
+            color: white;
+        }
+
+        #data-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 1.5rem;
+            margin-top: 1rem;
+        }
+
+        .character-card {
+            background: var(--card-bg);
+            border-radius: var(--radius);
+            box-shadow: var(--shadow);
+            padding: 1.5rem;
+            text-align: center;
+            transition: transform 0.3s ease;
+        }
+
+        .character-card:hover {
+            transform: translateY(-5px);
+        }
+
+        .character-card img {
+            width: 120px;
+            height: 120px;
+            border-radius: 50%;
+            object-fit: cover;
+            margin-bottom: 1rem;
+            border: 3px solid var(--primary);
+        }
+
+        .character-card h3 {
+            font-size: 1.3rem;
+            margin-bottom: 0.5rem;
+            color: #333;
+        }
+
+        .character-info {
+            display: flex;
+            flex-direction: column;
+            gap: 0.3rem;
+            font-size: 0.9rem;
+            color: #666;
+        }
+
+        .status {
+            display: inline-block;
+            padding: 0.2rem 0.6rem;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            margin: 0.5rem 0;
+        }
+
+        .status.alive {
+            background: #2ed573;
+            color: white;
+        }
+
+        .status.dead {
+            background: #ff4757;
+            color: white;
+        }
+
+        .status.unknown {
+            background: #ffa502;
+            color: white;
+        }
+
+        .error {
+            text-align: center;
+            padding: 2rem;
+            color: #ff4757;
+            font-weight: 600;
+            background: #ffe6e6;
+            border-radius: var(--radius);
+            margin: 1rem 0;
+        }
+
+        .stats {
+            display: flex;
+            justify-content: center;
+            gap: 2rem;
+            margin: 1rem 0;
+            padding: 1rem;
+            background: var(--card-bg);
+            border-radius: var(--radius);
+            box-shadow: var(--shadow);
+        }
+
+        .stat {
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: var(--primary);
+        }
+
+        .stat-label {
+            font-size: 0.9rem;
+            color: #666;
+        }
+
+        @media (prefers-color-scheme: dark) {
+            :root {
+                --card-bg: #1e1e1e;
+                --bg: #121212;
+                --shadow: 0 4px 14px rgba(0, 0, 0, 0.6);
+            }
+            
+            .character-card h3 {
+                color: #f1f1f1;
+            }
+            
+            .character-info {
+                color: #ccc;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .controls {
+                flex-direction: column;
+                align-items: center;
+            }
+            
+            .stats {
+                flex-direction: column;
+                gap: 1rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1> Fetch vs Axios Super-comparador</h1>
+        
+        <div class="controls">
+            <button id="fetchBtn" class="btn btn-fetch">
+                📡 Cargar con Fetch
+            </button>
+            <button id="axiosBtn" class="btn btn-axios">
+                ⚡ Cargar con Axios
+            </button>
+        </div>
+
+        <div id="stats" class="stats" style="display: none;">
+            <div class="stat">
+                <div class="stat-value" id="requestTime">0ms</div>
+                <div class="stat-label">Tiempo de respuesta</div>
+            </div>
+            <div class="stat">
+                <div class="stat-value" id="characterCount">0</div>
+                <div class="stat-label">Personajes cargados</div>
+            </div>
+        </div>
+
+        <div id="methodIndicator" class="method-indicator" style="display: none;"></div>
+        <div id="loadingIndicator" class="loading" style="display: none;">
+            Cargando personajes...
+        </div>
+        <div id="data-container"></div>
+    </div>
+
+    <script>
+        // Configuración de la API
+        const BASE_URL = "https://rickandmortyapi.com/api/character";
+        
+        // Referencias DOM
+        const fetchBtn = document.getElementById('fetchBtn');
+        const axiosBtn = document.getElementById('axiosBtn');
+        const dataContainer = document.getElementById('data-container');
+        const loadingIndicator = document.getElementById('loadingIndicator');
+        const methodIndicator = document.getElementById('methodIndicator');
+        const statsContainer = document.getElementById('stats');
+        const requestTimeEl = document.getElementById('requestTime');
+        const characterCountEl = document.getElementById('characterCount');
+
+        // Función para mostrar loading
+        function showLoading() {
+            loadingIndicator.style.display = 'block';
+            dataContainer.innerHTML = '';
+            statsContainer.style.display = 'none';
+            methodIndicator.style.display = 'none';
+            fetchBtn.disabled = true;
+            axiosBtn.disabled = true;
+        }
+
+        // Función para ocultar loading
+        function hideLoading() {
+            loadingIndicator.style.display = 'none';
+            fetchBtn.disabled = false;
+            axiosBtn.disabled = false;
+        }
+
+        // Función para mostrar error
+        function showError(message) {
+            dataContainer.innerHTML = `
+                <div class="error">
+                    ❌ Error: ${message}
+                </div>
+            `;
+        }
+
+        // Función para mostrar estadísticas
+        function showStats(time, count) {
+            requestTimeEl.textContent = `${time}ms`;
+            characterCountEl.textContent = count;
+            statsContainer.style.display = 'flex';
+        }
+
+        // Función para mostrar indicador de método
+        function showMethodIndicator(method) {
+            methodIndicator.textContent = `Datos cargados con: ${method.toUpperCase()}`;
+            methodIndicator.className = `method-indicator method-${method}`;
+            methodIndicator.style.display = 'block';
+        }
+
+        // Función para crear tarjeta de personaje
+        function createCharacterCard(character) {
+            const statusClass = character.status.toLowerCase();
+            
+            return `
+                <div class="character-card">
+                    <img src="${character.image}" alt="${character.name}">
+                    <h3>${character.name}</h3>
+                    <div class="character-info">
+                        <span class="status ${statusClass}">${character.status}</span>
+                        <span><strong>Especie:</strong> ${character.species}</span>
+                        <span><strong>Género:</strong> ${character.gender}</span>
+                        <span><strong>Origen:</strong> ${character.origin.name}</span>
+                        <span><strong>Ubicación:</strong> ${character.location.name}</span>
+                    </div>
+                </div>
+            `;
+        }
+
+        // Función para mostrar personajes
+        function displayCharacters(characters, method) {
+            const characterCards = characters.map(createCharacterCard).join('');
+            dataContainer.innerHTML = characterCards;
+            showMethodIndicator(method);
+        }
+
+        // Función con FETCH
+        async function fetchWithFetch() {
+            const startTime = performance.now();
+            
+            try {
+                showLoading();
+                
+                const response = await fetch(BASE_URL);
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+                
+                const data = await response.json();
+                const endTime = performance.now();
+                const requestTime = Math.round(endTime - startTime);
+                
+                hideLoading();
+                displayCharacters(data.results, 'fetch');
+                showStats(requestTime, data.results.length);
+                
+                console.log('🔵 FETCH - Datos recibidos:', data);
+                console.log('🔵 FETCH - Tiempo de respuesta:', requestTime + 'ms');
+                
+            } catch (error) {
+                hideLoading();
+                showError(`Fetch falló: ${error.message}`);
+                console.error('🔴 FETCH Error:', error);
+            }
+        }
+
+        // Función con AXIOS
+        async function fetchWithAxios() {
+            const startTime = performance.now();
+            
+            try {
+                showLoading();
+                
+                const response = await axios.get(BASE_URL, {
+                    timeout: 10000, // 10 segundos timeout
+                    headers: {
+                        'Accept': 'application/json'
+                    }
+                });
+                
+                const endTime = performance.now();
+                const requestTime = Math.round(endTime - startTime);
+                
+                hideLoading();
+                displayCharacters(response.data.results, 'axios');
+                showStats(requestTime, response.data.results.length);
+                
+                console.log('🟢 AXIOS - Datos recibidos:', response.data);
+                console.log('🟢 AXIOS - Tiempo de respuesta:', requestTime + 'ms');
+                console.log('🟢 AXIOS - Headers de respuesta:', response.headers);
+                console.log('🟢 AXIOS - Status:', response.status);
+                
+            } catch (error) {
+                hideLoading();
+                
+                if (error.response) {
+                    // Error de respuesta del servidor
+                    showError(`Axios falló: ${error.response.status} - ${error.response.statusText}`);
+                    console.error('🔴 AXIOS Response Error:', error.response);
+                } else if (error.request) {
+                    // Error de red/timeout
+                    showError(`Axios falló: No se pudo conectar al servidor`);
+                    console.error('🔴 AXIOS Request Error:', error.request);
+                } else {
+                    // Error de configuración
+                    showError(`Axios falló: ${error.message}`);
+                    console.error('🔴 AXIOS Error:', error.message);
+                }
+            }
+        }
+
+        // Event listeners
+        fetchBtn.addEventListener('click', fetchWithFetch);
+        axiosBtn.addEventListener('click', fetchWithAxios);
+
+        // Información sobre las diferencias en consola
+        console.log(`
+
+        `);
+    </script>
+</body>
+</html>

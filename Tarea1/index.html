@@ -1,0 +1,495 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simulador de Pedidos - Cafetería</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background: linear-gradient(135deg, #8B4513, #D2691E);
+            color: #333;
+            min-height: 100vh;
+        }
+
+        .container {
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+        }
+
+        h1 {
+            text-align: center;
+            color: #8B4513;
+            margin-bottom: 30px;
+            font-size: 2.5em;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .controls {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 30px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        button {
+            background: linear-gradient(45deg, #D2691E, #FF8C00);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 25px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: bold;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(210, 105, 30, 0.3);
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(210, 105, 30, 0.4);
+        }
+
+        button:active {
+            transform: translateY(0);
+        }
+
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+            margin-bottom: 30px;
+        }
+
+        .stat-card {
+            background: linear-gradient(135deg, #f8f9fa, #e9ecef);
+            padding: 15px;
+            border-radius: 10px;
+            text-align: center;
+            border-left: 4px solid #D2691E;
+        }
+
+        .stat-number {
+            font-size: 2em;
+            font-weight: bold;
+            color: #8B4513;
+        }
+
+        .stat-label {
+            color: #666;
+            font-size: 0.9em;
+        }
+
+        #orderList {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        .order-item {
+            background: linear-gradient(135deg, #fff, #f8f9fa);
+            margin: 10px 0;
+            padding: 15px 20px;
+            border-radius: 10px;
+            border-left: 5px solid #ddd;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: all 0.3s ease;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        .order-item.processing {
+            border-left-color: #FFA500;
+            animation: pulse 2s infinite;
+        }
+
+        .order-item.completed {
+            border-left-color: #28a745;
+            background: linear-gradient(135deg, #d4edda, #c3e6cb);
+        }
+
+        @keyframes pulse {
+            0% { box-shadow: 0 2px 10px rgba(255, 165, 0, 0.2); }
+            50% { box-shadow: 0 2px 20px rgba(255, 165, 0, 0.4); }
+            100% { box-shadow: 0 2px 10px rgba(255, 165, 0, 0.2); }
+        }
+
+        .order-info {
+            flex-grow: 1;
+        }
+
+        .order-id {
+            font-weight: bold;
+            color: #8B4513;
+            font-size: 1.1em;
+        }
+
+        .order-details {
+            color: #666;
+            font-size: 0.9em;
+            margin-top: 5px;
+        }
+
+        .status-badge {
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 0.8em;
+            font-weight: bold;
+            text-transform: uppercase;
+        }
+
+        .status-processing {
+            background: #fff3cd;
+            color: #856404;
+            border: 1px solid #ffeaa7;
+        }
+
+        .status-completed {
+            background: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 4px;
+            background: #eee;
+            border-radius: 2px;
+            margin-top: 10px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #FFA500, #FF8C00);
+            width: 0%;
+            transition: width 0.1s ease;
+            border-radius: 2px;
+        }
+
+        .coffee-types {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+            gap: 10px;
+            margin: 20px 0;
+        }
+
+        .coffee-btn {
+            padding: 8px 16px;
+            font-size: 14px;
+            background: linear-gradient(135deg, #6f4e37, #8B4513);
+        }
+
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: #28a745;
+            color: white;
+            padding: 15px 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+            transform: translateX(400px);
+            transition: transform 0.3s ease;
+            z-index: 1000;
+        }
+
+        .notification.show {
+            transform: translateX(0);
+        }
+
+        @media (max-width: 600px) {
+            .container {
+                padding: 20px;
+                margin: 10px;
+            }
+            
+            h1 {
+                font-size: 2em;
+            }
+            
+            .controls {
+                flex-direction: column;
+            }
+            
+            button {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>☕ Cafetería MUY Asincrónica ☕</h1>
+        
+        <div class="stats">
+            <div class="stat-card">
+                <div class="stat-number" id="totalOrders">0</div>
+                <div class="stat-label">Total Pedidos</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number" id="processingOrders">0</div>
+                <div class="stat-label">En Proceso</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number" id="completedOrders">0</div>
+                <div class="stat-label">Completados</div>
+            </div>
+        </div>
+
+        <div class="controls">
+            <button id="addOrderBtn">🆕 Pedido Aleatorio</button>
+            <button id="clearAllBtn">🗑️ Limpiar Todo</button>
+        </div>
+
+        <div class="coffee-types">
+            <button class="coffee-btn" data-coffee="Espresso">☕ Espresso</button>
+            <button class="coffee-btn" data-coffee="Latte">🥛 Latte</button>
+            <button class="coffee-btn" data-coffee="Cappuccino">☕ Cappuccino</button>
+            <button class="coffee-btn" data-coffee="Americano">☕ Americano</button>
+            <button class="coffee-btn" data-coffee="Mocha">🍫 Mocha</button>
+            <button class="coffee-btn" data-coffee="Frappé">🧊 Frappé</button>
+        </div>
+
+        <ul id="orderList"></ul>
+    </div>
+
+    <div id="notification" class="notification"></div>
+
+    <script>
+        // Referencias del DOM
+        const orderList = document.getElementById('orderList');
+        const addOrderBtn = document.getElementById('addOrderBtn');
+        const clearAllBtn = document.getElementById('clearAllBtn');
+        const coffeeButtons = document.querySelectorAll('.coffee-btn');
+        const notification = document.getElementById('notification');
+        
+        // Estadísticas
+        const totalOrdersEl = document.getElementById('totalOrders');
+        const processingOrdersEl = document.getElementById('processingOrders');
+        const completedOrdersEl = document.getElementById('completedOrders');
+
+        // Variables de estado
+        let orderId = 1;
+        let orders = new Map(); // Para tracking de pedidos
+        let stats = { total: 0, processing: 0, completed: 0 };
+
+        // Tipos de café con tiempos de preparación (en segundos)
+        const coffeeTypes = {
+            'Espresso': { time: 2, emoji: '☕', color: '#8B4513' },
+            'Latte': { time: 4, emoji: '🥛', color: '#DEB887' },
+            'Cappuccino': { time: 3, emoji: '☕', color: '#A0522D' },
+            'Americano': { time: 2.5, emoji: '☕', color: '#654321' },
+            'Mocha': { time: 5, emoji: '🍫', color: '#7B3F00' },
+            'Frappé': { time: 6, emoji: '🧊', color: '#4682B4' }
+        };
+
+        // Función para mostrar notificaciones
+        function showNotification(message) {
+            notification.textContent = message;
+            notification.classList.add('show');
+            setTimeout(() => {
+                notification.classList.remove('show');
+            }, 3000);
+        }
+
+        // Función para actualizar estadísticas
+        function updateStats() {
+            totalOrdersEl.textContent = stats.total;
+            processingOrdersEl.textContent = stats.processing;
+            completedOrdersEl.textContent = stats.completed;
+        }
+
+        // Función para obtener café aleatorio
+        function getRandomCoffee() {
+            const types = Object.keys(coffeeTypes);
+            return types[Math.floor(Math.random() * types.length)];
+        }
+
+        // la Función para crear un pedido
+        function createOrder(coffeeType = null) {
+            const coffee = coffeeType || getRandomCoffee();
+            const order = {
+                id: orderId++,
+                coffeeType: coffee,
+                status: 'En Proceso',
+                timestamp: new Date(),
+                preparationTime: coffeeTypes[coffee].time
+            };
+            
+            orders.set(order.id, order);
+            stats.total++;
+            stats.processing++;
+            updateStats();
+            
+            return order;
+        }
+
+        // Función para agregar pedido al DOM
+        function addOrderToDOM(order) {
+            const listItem = document.createElement('li');
+            listItem.id = `order-${order.id}`;
+            listItem.className = 'order-item processing';
+            
+            const coffeeInfo = coffeeTypes[order.coffeeType];
+            
+            listItem.innerHTML = `
+                <div class="order-info">
+                    <div class="order-id">Pedido #${order.id}</div>
+                    <div class="order-details">
+                        ${coffeeInfo.emoji} ${order.coffeeType} - ${order.preparationTime}s de preparación
+                    </div>
+                    <div class="progress-bar">
+                        <div class="progress-fill" id="progress-${order.id}"></div>
+                    </div>
+                </div>
+                <div class="status-badge status-processing">En Proceso</div>
+            `;
+            
+            orderList.appendChild(listItem);
+        }
+
+        // Función para actualizar el estado del pedido
+        function updateOrderStatus(order, status) {
+            const listItem = document.getElementById(`order-${order.id}`);
+            if (!listItem) return;
+
+            const statusBadge = listItem.querySelector('.status-badge');
+            
+            if (status === 'Completado') {
+                listItem.className = 'order-item completed';
+                statusBadge.textContent = 'Completado';
+                statusBadge.className = 'status-badge status-completed';
+                
+                // Actualizar estadísticas
+                stats.processing--;
+                stats.completed++;
+                updateStats();
+                
+                // Actualizar objeto order
+                order.status = 'Completado';
+                order.completedAt = new Date();
+                
+                showNotification(`Pedido #${order.id} (${order.coffeeType}) completado!`);
+            }
+        }
+
+        // Función para simular el progreso del pedido
+        function simulateProgress(orderId, duration) {
+            return new Promise((resolve) => {
+                const progressBar = document.getElementById(`progress-${orderId}`);
+                if (!progressBar) {
+                    resolve();
+                    return;
+                }
+                
+                const startTime = Date.now();
+                const interval = setInterval(() => {
+                    const elapsed = Date.now() - startTime;
+                    const progress = Math.min((elapsed / (duration * 1000)) * 100, 100);
+                    
+                    progressBar.style.width = `${progress}%`;
+                    
+                    if (progress >= 100) {
+                        clearInterval(interval);
+                        resolve();
+                    }
+                }, 50); // Actualizar cada 50ms para suavidad
+            });
+        }
+
+        // Función principal para procesar pedido (usando async/await)
+        async function processOrder(order) {
+            try {
+                console.log(`Iniciando preparación del ${order.coffeeType} #${order.id}`);
+                
+                // Simular progreso visual
+                await simulateProgress(order.id, order.preparationTime);
+                
+                // Simular tiempo de preparación usando Promise con setTimeout
+                await new Promise(resolve => {
+                    setTimeout(resolve, 100); // Pequeño delay adicional para efecto
+                });
+                
+                // Actualizar estado a completado
+                updateOrderStatus(order, 'Completado');
+                
+                console.log(`${order.coffeeType} #${order.id} completado en ${order.preparationTime}s`);
+                
+            } catch (error) {
+                console.error(`Error procesando pedido #${order.id}:`, error);
+                showNotification(`Error en pedido #${order.id}`);
+            }
+        }
+
+        // Event listeners
+        addOrderBtn.addEventListener('click', () => {
+            const order = createOrder();
+            addOrderToDOM(order);
+            processOrder(order); // Proceso asíncrono
+            showNotification(`Nuevo pedido: ${order.coffeeType} #${order.id}`);
+        });
+
+        // Event listeners para botones de café específico
+        coffeeButtons.forEach(button => {
+            button.addEventListener('click', () => {
+                const coffeeType = button.dataset.coffee;
+                const order = createOrder(coffeeType);
+                addOrderToDOM(order);
+                processOrder(order);
+                showNotification(`Nuevo ${coffeeType} #${order.id}`);
+            });
+        });
+
+        // Limpiar todos los pedidos
+        clearAllBtn.addEventListener('click', () => {
+            orderList.innerHTML = '';
+            orders.clear();
+            stats = { total: 0, processing: 0, completed: 0 };
+            updateStats();
+            orderId = 1;
+            showNotification('🗑️ Todos los pedidos eliminados');
+        });
+
+        // Demostración inicial automática
+        setTimeout(() => {
+            showNotification('👋 ¡Bienvenido! Haz clic en los botones para crear pedidos');
+        }, 1000);
+
+        // Simulación de pedidos automáticos cada 10 segundos (opcional)
+        let autoOrderInterval;
+        
+        function toggleAutoOrders() {
+            if (autoOrderInterval) {
+                clearInterval(autoOrderInterval);
+                autoOrderInterval = null;
+                showNotification('⏹ Pedidos automáticos detenidos');
+            } else {
+                autoOrderInterval = setInterval(() => {
+                    if (stats.processing < 5) { // Límite de pedidos simultáneos
+                        const order = createOrder();
+                        addOrderToDOM(order);
+                        processOrder(order);
+                    }
+                }, 8000);
+                showNotification('▶ Pedidos automáticos activados');
+            }
+        }
+
+        // Agregar botón para pedidos automáticos
+        const toggleAutoBtn = document.createElement('button');
+        toggleAutoBtn.textContent = 'Auto Pedidos';
+        toggleAutoBtn.addEventListener('click', toggleAutoOrders);
+        document.querySelector('.controls').appendChild(toggleAutoBtn);
+
+        console.log('Simulador de Cafetería cargado! Event Loop y Asincronicidad en acción ');
+    </script>
+</body>
+</html>
